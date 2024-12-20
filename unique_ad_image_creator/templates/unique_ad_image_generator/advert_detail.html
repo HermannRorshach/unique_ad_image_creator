@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ advert.title }}{% endblock title %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ advert.title }}</h1>
+    <p><strong>Описание:</strong></p>
+    <p>{{ advert.description }}</p>
+
+    {{ advert.images|linebreaks }}
+
+    <p><strong>Категория:</strong> {{ advert.category_id }}</p>
+    <a href="{% url 'image_generator:advert_list' %}" class="btn btn-secondary mt-3">Назад к списку объявлений</a>
+</div>
+{% endblock content %}
