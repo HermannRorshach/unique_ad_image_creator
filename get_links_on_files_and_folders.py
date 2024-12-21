@@ -1,15 +1,16 @@
+import math
 import os
 from io import BytesIO
 
 import boto3
 from botocore.config import Config
 from dotenv import load_dotenv
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 
 load_dotenv()
 YANDEX_ACCESS_KEY = os.getenv('YANDEX_CLOUD_ACCESS_KEY_ID')
 YANDEX_SECRET_KEY = os.getenv('YANDEX_CLOUD_SECRET_ACCESS_KEY')
-YANDEX_BUCKET_NAME = "adverts-bucket" # '001test001'
+YANDEX_BUCKET_NAME = '001test001' # "adverts-bucket"
 YANDEX_ENDPOINT_URL = 'https://storage.yandexcloud.net'
 
 # Настройка клиента S3
@@ -105,9 +106,6 @@ def download_and_clean_metadata(bucket_name, file_key):
         print(f"Ошибка при скачивании и загрузке файла {file_key}: {e}")
 
 
-import math
-from PIL import Image
-from io import BytesIO
 
 def calculate_opposite(hypotenuse, angle_deg):
     angle_rad = math.radians(angle_deg)
@@ -177,59 +175,166 @@ def upload_image(changed_file, file_name, bucket_name):
 
 def add_suffix_to_filename(file_path, suffix):
     parts = file_path.rsplit('.', 1)
-    return f"{parts[0]}_{suffix}.{parts[1]}" if len(parts) > 1 else f"{file_path}_{suffix}"
+    return f"{parts[0]}_{suffix}.JPG" if len(parts) > 1 else f"{file_path}_{suffix}"
 
+
+def adjust_contrast(file_obj, factor):
+    # Функция для изменения контрастности
+    image = Image.open(file_obj)
+    # Применение ориентации из EXIF
+    image = ImageOps.exif_transpose(image)
+    enhancer = ImageEnhance.Contrast(image)
+    adjusted_image = enhancer.enhance(factor)
+
+    # Сохранение результата в BytesIO
+    output = BytesIO()
+    adjusted_image.save(output, format="JPEG")
+    output.seek(0)
+    return output
+
+def adjust_brightness(file_obj, factor):
+    # Функция для изменения яркости
+    image = Image.open(file_obj)
+    # Применение ориентации из EXIF
+    image = ImageOps.exif_transpose(image)
+    enhancer = ImageEnhance.Brightness(image)
+    adjusted_image = enhancer.enhance(factor)
+
+    # Сохранение результата в BytesIO
+    output = BytesIO()
+    adjusted_image.save(output, format="JPEG")
+    output.seek(0)
+    return output
+
+
+def adjust_white_balance(file_obj, red_factor, green_factor, blue_factor):
+    image = Image.open(file_obj)
+    # Применение ориентации из EXIF
+    image = ImageOps.exif_transpose(image)
+    image = image.convert("RGB")
+
+    # Разделение изображения на каналы
+    r, g, b = image.split()
+
+    # Применение коэффициентов для каждого канала
+    r = r.point(lambda i: i * red_factor)
+    g = g.point(lambda i: i * green_factor)
+    b = b.point(lambda i: i * blue_factor)
+
+    # Объединение каналов обратно
+    adjusted_image = Image.merge("RGB", (r, g, b))
+
+    # Сохранение результата в BytesIO
+    output = BytesIO()
+    adjusted_image.save(output, format="JPEG")
+    output.seek(0)
+    return output
+
+
+def process_and_save(file_path, edit_function, *args):
+    print(file_path)
+    print(edit_function)
+    print(*args)
+    # Открыть файл и передать в функцию редактирования
+    with open(file_path, "rb") as file_obj:
+        output = edit_function(file_obj, *args)
+
+    # Определение нового имени файла
+    base, ext = os.path.splitext(file_path)
+    counter = 1
+    new_file_path = f"{base}_{counter}{ext}"
+
+    while os.path.exists(new_file_path):
+        counter += 1
+        new_file_path = f"{base}_{counter}{ext}"
+
+    # Сохранить результат
+    with open(new_file_path, "wb") as output_file:
+        output_file.write(output.getvalue())
+
+    print(f"Файл сохранён как: {new_file_path}")
+    return new_file_path
 
 # Ввод названия бакета
 bucket_name = YANDEX_BUCKET_NAME # input("Введите название бакета: ")
 
 
-def main():
+# def main():
     # # Получение списка папок
-    folders = get_folders(bucket_name)
-    # print("\nСписок относительных путей папок в бакете:")
-    # for folder in folders.relative_paths:
-    #     print(folder)
-    # print("\nСписок абсолютных путей папок в бакете:")
-    # for folder in folders.full_paths:
-    #     print(folder)
+    # folders = get_folders(bucket_name)
+    # # print("\nСписок относительных путей папок в бакете:")
+    # # for folder in folders.relative_paths:
+    # #     print(folder)
+    # # print("\nСписок абсолютных путей папок в бакете:")
+    # # for folder in folders.full_paths:
+    # #     print(folder)
 
-    # Получение списка файлов
-    files = get_files(bucket_name)
-    print("\nСписок относительных путей файлов в бакете:")
-    print(list(zip(files.relative_paths, folders.relative_paths)))
-    for file in files.relative_paths:
-        file_data = download_and_clean_metadata(bucket_name, file)
+    # # Получение списка файлов
+    # files = get_files(bucket_name)
+    # print("\nСписок относительных путей файлов в бакете:")
+    # print(list(zip(files.relative_paths, folders.relative_paths)))
+    # for file in files.relative_paths:
+    #     file = "01/noinf1/1/3.jpg"
+    #     # file = "03/noinf1/1/2.jpg"
+    #     file_data = download_and_clean_metadata(bucket_name, file)
 
-        # Создаём и загружаем изображение, повёрнутое на 1 градус вправо
-        output = rotate_image(file_data, direction='right', degrees=1)
-        new_name = add_suffix_to_filename(file, "right_rotated_1_degrees")
-        upload_image(output, new_name, bucket_name)
+    #     output = adjust_brightness(file_data, 0.7)
+    #     new_name = add_suffix_to_filename(file, "brightness")
+    #     upload_image(output, new_name, bucket_name)
 
-        # Создаём и загружаем изображение, повёрнутое на 2 градус вправо
-        output = rotate_image(file_data, direction='right', degrees=2)
-        new_name = add_suffix_to_filename(file, "right_rotated_2_degrees")
-        upload_image(output, new_name, bucket_name)
+    #     break
 
-        # Создаём и загружаем изображение, повёрнутое на 1 градус влево
-        output = rotate_image(file_data, direction='left', degrees=1)
-        new_name = add_suffix_to_filename(file, "left_rotated_1_degrees")
-        upload_image(output, new_name, bucket_name)
 
-        # Создаём и загружаем изображение, повёрнутое на 2 градус влево
-        output = rotate_image(file_data, direction='left', degrees=2)
-        new_name = add_suffix_to_filename(file, "left_rotated_2_degrees")
-        upload_image(output, new_name, bucket_name)
-        break
+    #     # Создаём и загружаем изображение, повёрнутое на 1 градус вправо
+    #     output = rotate_image(file_data, direction='right', degrees=1)
+    #     new_name = add_suffix_to_filename(file, "right_rotated_1_degrees")
+    #     upload_image(output, new_name, bucket_name)
+
+    #     # Создаём и загружаем изображение, повёрнутое на 2 градус вправо
+    #     output = rotate_image(file_data, direction='right', degrees=2)
+    #     new_name = add_suffix_to_filename(file, "right_rotated_2_degrees")
+    #     upload_image(output, new_name, bucket_name)
+
+    #     # Создаём и загружаем изображение, повёрнутое на 1 градус влево
+    #     output = rotate_image(file_data, direction='left', degrees=1)
+    #     new_name = add_suffix_to_filename(file, "left_rotated_1_degrees")
+    #     upload_image(output, new_name, bucket_name)
+
+    #     # Создаём и загружаем изображение, повёрнутое на 2 градус влево
+    #     output = rotate_image(file_data, direction='left', degrees=2)
+    #     new_name = add_suffix_to_filename(file, "left_rotated_2_degrees")
+    #     upload_image(output, new_name, bucket_name)
+
+
+    #     break
 
 
     # print("\nСписок абсолютных путей файлов в бакете:")
     # for file in files.full_paths:
     #     print(file)
 
+white_balance_factors = (
+    (1.1, 1.0, 0.9),  # Лёгкий сдвиг в сторону тёплых тонов
+    (0.9, 1.0, 1.1),  # Лёгкий сдвиг в сторону холодных тонов
+    (1.0, 1.1, 0.9),  # Усиление зелёного с уменьшением синего
+    (1.0, 0.9, 1.1),  # Ослабление зелёного, усиление синего
+    (1.1, 0.9, 1.0),  # Лёгкий сдвиг в сторону красного
+    (0.9, 1.1, 1.0),  # Усиление зелёного, ослабление красного
+    (1.05, 1.0, 0.95),  # Едва заметное усиление красного
+    (0.95, 1.0, 1.05),  # Едва заметное усиление синего
+    (1.0, 1.05, 0.95),  # Лёгкое усиление зелёного
+    (1.0, 0.95, 1.05),  # Лёгкое ослабление зелёного
+    (1.1, 1.1, 0.9),  # Усиление красного и зелёного, ослабление синего
+    (0.9, 1.1, 1.1),  # Усиление зелёного и синего, ослабление красного
+    (1.05, 0.95, 1.0),  # Едва заметный сдвиг
+    (0.95, 1.05, 1.0),  # Едва заметный сдвиг в обратную сторону
+)
+
 
 if __name__ == "__main__":
-    main()
+    for tpl in white_balance_factors:
+        process_and_save("3.jpg", adjust_white_balance, *tpl)
+    #main()
     # Пример использования:
     # Если хотите сохранить изображение в файл
     # rotated_img = rotate_image("Screenshot_28.png ", direction='right', degrees=45)
