@@ -7,6 +7,8 @@ from botocore.config import Config
 from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageOps
 
+from patterns import patterns
+
 load_dotenv()
 YANDEX_ACCESS_KEY = os.getenv('YANDEX_CLOUD_ACCESS_KEY_ID')
 YANDEX_SECRET_KEY = os.getenv('YANDEX_CLOUD_SECRET_ACCESS_KEY')
@@ -173,9 +175,9 @@ def upload_image(changed_file, file_name, bucket_name):
         print(f"Ошибка при обработке и загрузке файла {file_name}: {e}")
 
 
-def add_suffix_to_filename(file_path, suffix):
+def add_suffix_to_filename(file_path, suffix, args):
     parts = file_path.rsplit('.', 1)
-    return f"{parts[0]}_{suffix}.JPG" if len(parts) > 1 else f"{file_path}_{suffix}"
+    return f"{parts[0]}_{suffix}_{args}.JPG" if len(parts) > 1 else f"{file_path}_{suffix}"
 
 
 def adjust_contrast(file_obj, factor):
@@ -231,6 +233,88 @@ def adjust_white_balance(file_obj, red_factor, green_factor, blue_factor):
     return output
 
 
+def resize_image(file_obj, width_percent):
+    image = Image.open(file_obj)
+    # Применение ориентации из EXIF
+    image = ImageOps.exif_transpose(image)
+
+    # Вычисление новых размеров
+    new_width = int(image.width * (width_percent / 100))
+
+    # Изменение размера изображения
+    resized_image = image.resize((new_width, image.height))
+
+    # Сохранение результата в BytesIO
+    output = BytesIO()
+    resized_image.save(output, format="JPEG")
+    output.seek(0)
+    return output
+
+
+def crop_image(file_obj, left=0, top=0, right=0, bottom=0):
+    image = Image.open(file_obj)
+    # Применение ориентации из EXIF
+    image = ImageOps.exif_transpose(image)
+
+    # Вычисление новых границ
+    width, height = image.size
+    crop_box = (
+        left,
+        top,
+        width - right,
+        height - bottom
+    )
+
+    # Проверка границ на корректность
+    if crop_box[0] < 0 or crop_box[1] < 0 or crop_box[2] > width or crop_box[3] > height:
+        raise ValueError("Invalid crop dimensions: resulting size is out of bounds.")
+
+    # Обрезка изображения
+    cropped_image = image.crop(crop_box)
+
+    # Сохранение результата в BytesIO
+    output = BytesIO()
+    cropped_image.save(output, format="JPEG")
+    output.seek(0)
+    return output
+
+
+def crop_image_by_percentage(file_obj, left_pct=0, top_pct=0, right_pct=0, bottom_pct=0):
+    image = Image.open(file_obj)
+    # Применение ориентации из EXIF
+    image = ImageOps.exif_transpose(image)
+
+    # Получение размеров изображения
+    width, height = image.size
+
+    # Вычисление границ обрезки в пикселях на основе процентов
+    left = int(width * left_pct / 100)
+    top = int(height * top_pct / 100)
+    right = int(width * right_pct / 100)
+    bottom = int(height * bottom_pct / 100)
+
+    # Вычисление новых границ
+    crop_box = (
+        left,
+        top,
+        width - right,
+        height - bottom
+    )
+
+    # Проверка границ на корректность
+    if crop_box[0] < 0 or crop_box[1] < 0 or crop_box[2] > width or crop_box[3] > height:
+        raise ValueError("Invalid crop dimensions: resulting size is out of bounds.")
+
+    # Обрезка изображения
+    cropped_image = image.crop(crop_box)
+
+    # Сохранение результата в BytesIO
+    output = BytesIO()
+    cropped_image.save(output, format="JPEG")
+    output.seek(0)
+    return output
+
+
 def process_and_save(file_path, edit_function, *args):
     print(file_path)
     print(edit_function)
@@ -254,6 +338,8 @@ def process_and_save(file_path, edit_function, *args):
 
     print(f"Файл сохранён как: {new_file_path}")
     return new_file_path
+
+
 
 # Ввод названия бакета
 bucket_name = YANDEX_BUCKET_NAME # input("Введите название бакета: ")
@@ -330,10 +416,37 @@ white_balance_factors = (
     (0.95, 1.05, 1.0),  # Едва заметный сдвиг в обратную сторону
 )
 
+functions = {
+    # adjust_white_balance: "wb",
+    adjust_contrast: "contrast",
+    adjust_brightness: "brightness",
+    crop_image_by_percentage: "crop",
+    resize_image: "resize",
+    rotate_image: "rotate"
+    }
 
 if __name__ == "__main__":
-    for tpl in white_balance_factors:
-        process_and_save("3.jpg", adjust_white_balance, *tpl)
+    # for tpl in white_balance_factors:
+    name = "3.jpg"
+    new_name = name
+    for pattern in patterns.values():
+        with open(name, "rb") as file_obj:
+            for function, args in zip(functions.keys(), list(pattern.values())[1:]):
+                if args:
+                    new_name = add_suffix_to_filename(new_name, functions[function], args)
+                    file_obj = function(file_obj, *args)
+            # Определение нового имени файла
+            base, ext = os.path.splitext(new_name)
+            counter = 1
+            new_name = f"{base}{ext}"
+
+            while os.path.exists(new_name):
+                counter += 1
+                new_name = f"{base}{ext}"
+            with open(new_name, "wb") as output_file:
+                output_file.write(file_obj.getvalue())
+                print(f"Файл сохранён как: {new_name}")
+                new_name = name
     #main()
     # Пример использования:
     # Если хотите сохранить изображение в файл
