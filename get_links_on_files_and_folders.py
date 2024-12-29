@@ -175,9 +175,15 @@ def upload_image(changed_file, file_name, bucket_name):
         print(f"Ошибка при обработке и загрузке файла {file_name}: {e}")
 
 
-def add_suffix_to_filename(file_path, suffix, args):
+def add_suffix_to_filename(file_path, pattern_name, suffix, args):
     parts = file_path.rsplit('.', 1)
-    return f"{parts[0]}_{suffix}_{args}.JPG" if len(parts) > 1 else f"{file_path}_{suffix}"
+    if not all(type(arg) in (int, float) for arg in args):
+        args = [(float(arg), int(arg))[round(float(arg), 2) == int(arg)] for arg in args]
+    if "pattern" in file_path:
+        pattern_name = ""
+    else:
+        pattern_name = f"_pattern_{pattern_name}"
+    return f"{parts[0]}{pattern_name}_{suffix}_{args}.JPG" if len(parts) > 1 else f"{file_path}_{suffix}"
 
 
 def adjust_contrast(file_obj, factor):
@@ -427,26 +433,24 @@ functions = {
 
 if __name__ == "__main__":
     # for tpl in white_balance_factors:
-    name = "3.jpg"
-    new_name = name
-    for pattern in patterns.values():
+    name = "2.jpg"
+    for pattern_name, pattern in patterns.items():
+        new_name = name
         with open(name, "rb") as file_obj:
             for function, args in zip(functions.keys(), list(pattern.values())[1:]):
                 if args:
-                    new_name = add_suffix_to_filename(new_name, functions[function], args)
+                    new_name = add_suffix_to_filename(new_name, pattern_name, functions[function], args)
                     file_obj = function(file_obj, *args)
             # Определение нового имени файла
             base, ext = os.path.splitext(new_name)
-            counter = 1
             new_name = f"{base}{ext}"
-
             while os.path.exists(new_name):
-                counter += 1
                 new_name = f"{base}{ext}"
             with open(new_name, "wb") as output_file:
                 output_file.write(file_obj.getvalue())
                 print(f"Файл сохранён как: {new_name}")
                 new_name = name
+
     #main()
     # Пример использования:
     # Если хотите сохранить изображение в файл

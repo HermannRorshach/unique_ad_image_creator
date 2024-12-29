@@ -1,5 +1,56 @@
 import itertools
 
+from pprint import pprint
+
+class ImageModifier(float):
+    def __init__(self, value, name=None):
+        self.value = value
+        self.name = name
+
+    def __repr__(self):
+        # Если имя переменной передано, то выводим его в строковом представлении
+        if self.name:
+            return self.name
+        return f"ImageModifier({self.value!r})"
+
+    def __str__(self):
+        # Для других случаев возвращаем значение как строку
+        return str(self.value)
+
+
+
+# Значения для контрастности
+contrast_normal = ImageModifier(1, name="contrast_normal")
+
+# Значения для увеличения контрастности
+contrast_increase_low = ImageModifier(1.2, name="contrast_increase_low")
+contrast_increase_moderate = ImageModifier(1.4, name="contrast_increase_moderate")
+contrast_increase_high = ImageModifier(1.6, name="contrast_increase_high")
+
+# Значения для уменьшения контрастности
+contrast_decrease_low = ImageModifier(0.9, name="contrast_decrease_low")
+contrast_decrease_moderate = ImageModifier(0.8, name="contrast_decrease_moderate")
+contrast_decrease_high = ImageModifier(0.7, name="contrast_decrease_high")
+
+# Значения для яркости
+brightness_normal = ImageModifier(1, name="brightness_normal")
+
+# Значения для увеличения яркости
+brightness_increase_low = ImageModifier(1.1, name="brightness_increase_low")
+brightness_increase_moderate = ImageModifier(1.2, name="brightness_increase_moderate")
+brightness_increase_high = ImageModifier(1.3, name="brightness_increase_high")
+
+# Значения для уменьшения яркости
+brightness_decrease_low = ImageModifier(0.93, name="brightness_decrease_low")
+brightness_decrease_moderate = ImageModifier(0.87, name="brightness_decrease_moderate")
+brightness_decrease_high = ImageModifier(0.8, name="brightness_decrease_high")
+
+# Значения для обрезки
+crop_normal = ImageModifier(0, name="crop_normal")
+crop_increase_low = ImageModifier(2, name="crop_increase_low")
+crop_increase_moderate = ImageModifier(4, name="crop_increase_moderate")
+crop_increase_high = ImageModifier(6, name="crop_increase_high")
+
 
 class AdjustContrast:
     def __init__(self):
@@ -104,328 +155,366 @@ unique_combinations = combinations
 #     print()
 
 # Обновляем словарь patterns
-patterns = {
-    '1': {
-        'adjust_white_balance': (1.1, 1.0, 0.9),
-        'adjust_contrast': (contrast.increase_low,),
-        'adjust_brightness': (brightness.increase_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_low, crop_image.increase_low),
+patterns = {'1': {'adjust_white_balance': (1.1, 1.0, 0.9),
+       'adjust_contrast': (contrast_increase_low,),
+       'adjust_brightness': (brightness_increase_low,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_low,
+                                    crop_increase_low),
+       'resize_image': (),
+       'rotate_image': ()},
+ '2': {'adjust_white_balance': (0.9, 1.0, 1.1),
+       'adjust_contrast': (contrast_increase_low,),
+       'adjust_brightness': (brightness_increase_moderate,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_low,
+                                    crop_increase_moderate),
+       'resize_image': (),
+       'rotate_image': ()},
+ '3': {'adjust_white_balance': (1.0, 1.1, 0.9),
+       'adjust_contrast': (contrast_increase_low,),
+       'adjust_brightness': (brightness_normal,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_low,
+                                    crop_increase_high),
+       'resize_image': (),
+       'rotate_image': ()},
+ '4': {'adjust_white_balance': (1.0, 0.9, 1.1),
+       'adjust_contrast': (contrast_increase_low,),
+       'adjust_brightness': (brightness_decrease_low,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_moderate,
+                                    crop_increase_low),
+       'resize_image': (),
+       'rotate_image': ()},
+ '5': {'adjust_white_balance': (1.1, 0.9, 1.0),
+       'adjust_contrast': (contrast_increase_low,),
+       'adjust_brightness': (brightness_decrease_moderate,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_moderate,
+                                    crop_increase_moderate),
+       'resize_image': (),
+       'rotate_image': ()},
+ '6': {'adjust_white_balance': (0.9, 1.1, 1.0),
+       'adjust_contrast': (contrast_increase_low,),
+       'adjust_brightness': (brightness_decrease_high,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_moderate,
+                                    crop_increase_high),
+       'resize_image': (),
+       'rotate_image': ()},
+ '7': {'adjust_white_balance': (1.05, 1.0, 0.95),
+       'adjust_contrast': (contrast_increase_moderate,),
+       'adjust_brightness': (brightness_increase_low,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_high,
+                                    crop_increase_low),
+       'resize_image': (),
+       'rotate_image': ()},
+ '8': {'adjust_white_balance': (0.95, 1.0, 1.05),
+       'adjust_contrast': (contrast_increase_moderate,),
+       'adjust_brightness': (brightness_increase_moderate,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_high,
+                                    crop_increase_moderate),
+       'resize_image': (),
+       'rotate_image': ()},
+ '9': {'adjust_white_balance': (1.0, 1.05, 0.95),
+       'adjust_contrast': (contrast_increase_moderate,),
+       'adjust_brightness': (brightness_normal,),
+       'crop_image_by_percentage': (crop_normal,
+                                    crop_normal,
+                                    crop_increase_high,
+                                    crop_increase_high),
+       'resize_image': (),
+       'rotate_image': ()},
+ '10': {'adjust_white_balance': (1.0, 0.95, 1.05),
+        'adjust_contrast': (contrast_increase_moderate,),
+        'adjust_brightness': (brightness_decrease_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_normal,
+                                     crop_increase_low),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '2': {
-        'adjust_white_balance': (0.9, 1.0, 1.1),
-        'adjust_contrast': (contrast.increase_low,),
-      'adjust_brightness': (brightness.increase_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_low, crop_image.increase_moderate),
+        'rotate_image': ()},
+ '11': {'adjust_white_balance': (1.1, 1.1, 0.9),
+        'adjust_contrast': (contrast_increase_moderate,),
+        'adjust_brightness': (brightness_decrease_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_normal,
+                                     crop_increase_moderate),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '3': {
-        'adjust_white_balance': (1.0, 1.1, 0.9),
-        'adjust_contrast': (contrast.increase_low,),
-        'adjust_brightness': (brightness.increase_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_low, crop_image.increase_high),
+        'rotate_image': ()},
+ '12': {'adjust_white_balance': (0.9, 1.1, 1.1),
+        'adjust_contrast': (contrast_increase_moderate,),
+        'adjust_brightness': (brightness_decrease_high,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_normal,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '4': {
-        'adjust_white_balance': (1.0, 0.9, 1.1),
-        'adjust_contrast': (contrast.increase_low,),
-        'adjust_brightness': (brightness.normal,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_moderate, crop_image.increase_low),
+        'rotate_image': ()},
+ '13': {'adjust_white_balance': (1.05, 0.95, 1.0),
+        'adjust_contrast': (contrast_increase_high,),
+        'adjust_brightness': (brightness_increase_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_low,
+                                     crop_normal),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '5': {
-        'adjust_white_balance': (1.1, 0.9, 1.0),
-        'adjust_contrast': (contrast.increase_low,),
-        'adjust_brightness': (brightness.decrease_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_moderate, crop_image.increase_moderate),
+        'rotate_image': ()},
+ '14': {'adjust_white_balance': (0.95, 1.05, 1.0),
+        'adjust_contrast': (contrast_increase_high,),
+        'adjust_brightness': (brightness_normal,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_low,
+                                     crop_increase_low),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '6': {
-        'adjust_white_balance': (0.9, 1.1, 1.0),
-        'adjust_contrast': (contrast.increase_low,),
-        'adjust_brightness': (brightness.decrease_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '15': {'adjust_white_balance': (1.1, 1.0, 0.9),
+        'adjust_contrast': (contrast_increase_high,),
+        'adjust_brightness': (brightness_decrease_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_low,
+                                     crop_increase_moderate),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '7': {
-        'adjust_white_balance': (1.05, 1.0, 0.95),
-        'adjust_contrast': (contrast.increase_low,),
-        'adjust_brightness': (brightness.decrease_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_high, crop_image.increase_low),
+        'rotate_image': ()},
+ '16': {'adjust_white_balance': (0.9, 1.0, 1.1),
+        'adjust_contrast': (contrast_increase_high,),
+        'adjust_brightness': (brightness_decrease_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_low,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '8': {
-        'adjust_white_balance': (0.95, 1.0, 1.05),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.increase_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_high, crop_image.increase_moderate),
+        'rotate_image': ()},
+ '17': {'adjust_white_balance': (1.0, 1.1, 0.9),
+        'adjust_contrast': (contrast_increase_high,),
+        'adjust_brightness': (brightness_decrease_high,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_normal),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '9': {
-        'adjust_white_balance': (1.0, 1.05, 0.95),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.increase_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.normal, crop_image.increase_high, crop_image.increase_high),
+        'rotate_image': ()},
+ '18': {'adjust_white_balance': (1.0, 0.9, 1.1),
+        'adjust_contrast': (contrast_normal,),
+        'adjust_brightness': (brightness_increase_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_low),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '10': {
-        'adjust_white_balance': (1.0, 0.95, 1.05),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.increase_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.normal, crop_image.increase_low),
+        'rotate_image': ()},
+ '19': {'adjust_white_balance': (1.1, 0.9, 1.0),
+        'adjust_contrast': (contrast_normal,),
+        'adjust_brightness': (brightness_increase_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_moderate),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '11': {
-        'adjust_white_balance':(1.1, 1.1, 0.9),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.normal,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.normal, crop_image.increase_moderate),
+        'rotate_image': ()},
+ '20': {'adjust_white_balance': (0.9, 1.1, 1.0),
+        'adjust_contrast': (contrast_normal,),
+        'adjust_brightness': (brightness_normal,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '12': {
-        'adjust_white_balance': (0.9, 1.1, 1.1),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.decrease_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.normal, crop_image.increase_high),
+        'rotate_image': ()},
+ '21': {'adjust_white_balance': (1.05, 1.0, 0.95),
+        'adjust_contrast': (contrast_normal,),
+        'adjust_brightness': (brightness_decrease_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '13': {
-        'adjust_white_balance': (1.05, 0.95, 1.0),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.decrease_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_low, crop_image.normal),
+        'rotate_image': ()},
+ '22': {'adjust_white_balance': (0.95, 1.0, 1.05),
+        'adjust_contrast': (contrast_normal,),
+        'adjust_brightness': (brightness_decrease_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '14': {
-        'adjust_white_balance': (0.95, 1.05, 1.0),
-        'adjust_contrast': (contrast.increase_moderate,),
-        'adjust_brightness': (brightness.decrease_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_low, crop_image.increase_low),
+        'rotate_image': ()},
+ '23': {'adjust_white_balance': (1.0, 1.05, 0.95),
+        'adjust_contrast': (contrast_normal,),
+        'adjust_brightness': (brightness_decrease_high,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '15': {
-        'adjust_white_balance': (1.1, 1.0, 0.9),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.increase_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_low, crop_image.increase_moderate),
+        'rotate_image': ()},
+ '24': {'adjust_white_balance': (1.0, 0.95, 1.05),
+        'adjust_contrast': (contrast_decrease_low,),
+        'adjust_brightness': (brightness_increase_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '16': {
-        'adjust_white_balance': (0.9, 1.0, 1.1),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.increase_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_low, crop_image.increase_high),
+        'rotate_image': ()},
+ '25': {'adjust_white_balance': (1.1, 1.1, 0.9),
+        'adjust_contrast': (contrast_decrease_low,),
+        'adjust_brightness': (brightness_increase_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '17': {
-        'adjust_white_balance': (1.0, 1.1, 0.9),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.increase_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.normal),
+        'rotate_image': ()},
+ '26': {'adjust_white_balance': (0.9, 1.1, 1.1),
+        'adjust_contrast': (contrast_decrease_low,),
+        'adjust_brightness': (brightness_normal,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '18': {
-        'adjust_white_balance': (1.0, 0.9, 1.1),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.normal,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_low),
+        'rotate_image': ()},
+ '27': {'adjust_white_balance': (1.05, 0.95, 1.0),
+        'adjust_contrast': (contrast_decrease_low,),
+        'adjust_brightness': (brightness_decrease_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '19': {
-        'adjust_white_balance': (1.1, 0.9, 1.0),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.decrease_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_moderate),
+        'rotate_image': ()},
+ '28': {'adjust_white_balance': (0.95, 1.05, 1.0),
+        'adjust_contrast': (contrast_decrease_low,),
+        'adjust_brightness': (brightness_decrease_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '20': {
-        'adjust_white_balance': (0.9, 1.1, 1.0),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.decrease_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '29': {'adjust_white_balance': (1.1, 1.0, 0.9),
+        'adjust_contrast': (contrast_decrease_low,),
+        'adjust_brightness': (brightness_decrease_high,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '21': {
-        'adjust_white_balance': (1.05, 1.0, 0.95),
-        'adjust_contrast': (contrast.increase_high,),
-        'adjust_brightness': (brightness.decrease_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '30': {'adjust_white_balance': (0.9, 1.0, 1.1),
+        'adjust_contrast': (contrast_decrease_moderate,),
+        'adjust_brightness': (brightness_increase_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '22': {
-        'adjust_white_balance': (0.95, 1.0, 1.05),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.increase_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '31': {'adjust_white_balance': (1.0, 1.1, 0.9),
+        'adjust_contrast': (contrast_decrease_moderate,),
+        'adjust_brightness': (brightness_increase_moderate,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '23': {
-        'adjust_white_balance': (1.0, 1.05, 0.95),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.increase_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '32': {'adjust_white_balance': (1.0, 0.9, 1.1),
+        'adjust_contrast': (contrast_decrease_moderate,),
+        'adjust_brightness': (brightness_normal,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '24': {
-        'adjust_white_balance': (1.0, 0.95, 1.05),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.increase_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '33': {'adjust_white_balance': (1.1, 0.9, 1.0),
+        'adjust_contrast': (contrast_decrease_moderate,),
+        'adjust_brightness': (brightness_decrease_low,),
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '25': {
-        'adjust_white_balance': (1.1, 1.1, 0.9),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.normal,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '34': {'adjust_white_balance': (0.9, 1.1, 1.0),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '26': {
-        'adjust_white_balance': (0.9, 1.1, 1.1),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.decrease_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '35': {'adjust_white_balance': (1.05, 1.0, 0.95),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '27': {
-        'adjust_white_balance': (1.05, 0.95, 1.0),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.decrease_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '36': {'adjust_white_balance': (0.95, 1.0, 1.05),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '28': {
-        'adjust_white_balance': (0.95, 1.05, 1.0),
-        'adjust_contrast': (contrast.normal,),
-        'adjust_brightness': (brightness.decrease_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '37': {'adjust_white_balance': (1.0, 1.05, 0.95),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '29': {
-        'adjust_white_balance': (1.1, 1.0, 0.9),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.increase_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '38': {'adjust_white_balance': (1.0, 0.95, 1.05),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '30': {
-        'adjust_white_balance': (0.9, 1.0, 1.1),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.increase_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '39': {'adjust_white_balance': (1.1, 1.1, 0.9),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '31': {
-        'adjust_white_balance': (1.0, 1.1, 0.9),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.increase_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
+        'rotate_image': ()},
+ '40': {'adjust_white_balance': (0.9, 1.1, 1.1),
+        'adjust_contrast': None,
+        'adjust_brightness': None,
+        'crop_image_by_percentage': (crop_normal,
+                                     crop_increase_low,
+                                     crop_increase_moderate,
+                                     crop_increase_high),
         'resize_image': (),
-        'rotate_image': ()
-    },
-    '32': {
-        'adjust_white_balance': (1.0, 0.9, 1.1),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.normal,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '33': {
-        'adjust_white_balance': (1.1, 0.9, 1.0),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.decrease_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '34': {
-        'adjust_white_balance': (0.9, 1.1, 1.0),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.decrease_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '35': {
-        'adjust_white_balance': (1.05, 1.0, 0.95),
-        'adjust_contrast': (contrast.decrease_low,),
-        'adjust_brightness': (brightness.decrease_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '36': {
-        'adjust_white_balance': (0.95, 1.0, 1.05),
-        'adjust_contrast': (contrast.decrease_moderate,),
-        'adjust_brightness': (brightness.increase_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '37': {
-        'adjust_white_balance': (1.0, 1.05, 0.95),
-        'adjust_contrast': (contrast.decrease_moderate,),
-        'adjust_brightness': (brightness.increase_moderate,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '38': {
-        'adjust_white_balance': (1.0, 0.95, 1.05),
-        'adjust_contrast': (contrast.decrease_moderate,),
-        'adjust_brightness': (brightness.increase_high,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '39': {
-        'adjust_white_balance': (1.1, 1.1, 0.9),
-        'adjust_contrast': (contrast.decrease_moderate,),
-        'adjust_brightness': (brightness.normal,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-    '40': {
-        'adjust_white_balance': (0.9, 1.1, 1.1),
-        'adjust_contrast': (contrast.decrease_moderate,),
-        'adjust_brightness': (brightness.decrease_low,),
-        'crop_image_by_percentage': (crop_image.normal, crop_image.increase_low, crop_image.increase_moderate, crop_image.increase_high),
-        'resize_image': (),
-        'rotate_image': ()
-    },
-}
+        'rotate_image': ()}}
 
 white_balance_factors = (
     (1.1, 1.0, 0.9),  # Лёгкий сдвиг в сторону тёплых тонов
@@ -446,11 +535,36 @@ white_balance_factors = (
 
 num_factors = len(white_balance_factors)
 
+def move_param_value(patterns, key, param_name):
+    keys = list(patterns.keys())
+    key_index = keys.index(key)
+
+    # Перебираем все шаблоны после текущего
+    for i in range(key_index + 1, len(keys)):
+        current_key = keys[i]
+        prev_key = keys[i - 1]
+
+        # Переносим значение из текущего шаблона в предыдущий
+        patterns[prev_key][param_name] = patterns[current_key][param_name]
+
+    # Устанавливаем параметр в последнем шаблоне в None
+    patterns[keys[-1]][param_name] = None
+    print(patterns[keys[-1]][param_name])
+    return patterns
+
+# for key in ("38", "31", "24", "17", "16", "10", "3"):
+#     patterns = move_param_value(patterns, key, 'adjust_contrast')
+#     patterns = move_param_value(patterns, key, 'adjust_brightness')
+
+
+pprint(patterns, sort_dicts=False, compact=False)
+# print(move_param_value(patterns, "3", 'adjust_contrast'))
+
 # Итерация через паттерны и замена значений 'adjust_white_balance'
-for i, (key, pattern) in enumerate(patterns.items()):
-    # Вычисляем индекс для white_balance_factors
-    factor_index = i % num_factors
-    pattern['adjust_white_balance'] = white_balance_factors[factor_index]
+# for i, (key, pattern) in enumerate(patterns.items()):
+#     # Вычисляем индекс для white_balance_factors
+#     factor_index = i % num_factors
+#     pattern['adjust_white_balance'] = white_balance_factors[factor_index]
 
 # Проверка результата
 # for key, pattern in patterns.items():
