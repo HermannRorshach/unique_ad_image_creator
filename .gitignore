@@ -168,3 +168,5 @@ cython_debug/
 *.JPEG
 .zip
 *.zip
+input_images/
+output_images/

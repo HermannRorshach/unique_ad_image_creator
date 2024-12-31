@@ -7,6 +7,7 @@ from botocore.config import Config
 from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageOps
 
+
 from patterns import patterns
 
 load_dotenv()
@@ -113,7 +114,7 @@ def calculate_opposite(hypotenuse, angle_deg):
     angle_rad = math.radians(angle_deg)
     return hypotenuse * math.sin(angle_rad)
 
-def rotate_image(image_path_or_file, direction='right', degrees=90):
+def rotate_image(image_path_or_file, direction, degrees):
     # Открываем изображение
     image = Image.open(image_path_or_file)
 
@@ -124,18 +125,18 @@ def rotate_image(image_path_or_file, direction='right', degrees=90):
     # Поворачиваем изображение
     rotated_image = image.rotate(degrees, expand=False)
     width, height = rotated_image.size
-    print('После ротации')
-    print('width =', width, 'height =', height)
+    # print('После ротации')
+    # print('width =', width, 'height =', height)
 
     # Размеры исходного изображения
     width, height = image.size
 
     # Рассчитываем, сколько обрезать
     height_cut = calculate_opposite(width, abs(degrees))
-    print('width =', width, 'Обрезаем сверху и снизу:', height_cut)
+    # print('width =', width, 'Обрезаем сверху и снизу:', height_cut)
     # Вычисляем обрезку слева и справа
     width_cut = calculate_opposite(height, abs(degrees))
-    print('height =', height, 'Обрезаем слева и справа:', width_cut)
+    # print('height =', height, 'Обрезаем слева и справа:', width_cut)
 
     # Обрезаем новое изображение
     left = width_cut
@@ -143,7 +144,7 @@ def rotate_image(image_path_or_file, direction='right', degrees=90):
     top = height_cut
     bottom = height - height_cut
 
-    print('left, top, right, bottom :', left, top, right, bottom)
+    # print('left, top, right, bottom :', left, top, right, bottom)
     cropped_image = rotated_image.crop((left, top, right, bottom))
 
 
@@ -177,9 +178,9 @@ def upload_image(changed_file, file_name, bucket_name):
 
 def add_suffix_to_filename(file_path, pattern_name, suffix, args):
     parts = file_path.rsplit('.', 1)
-    if not all(type(arg) in (int, float) for arg in args):
+    if not all(type(arg) in (int, float, str) for arg in args):
         args = [(float(arg), int(arg))[round(float(arg), 2) == int(arg)] for arg in args]
-    if "pattern" in file_path:
+    if f"pattern_{pattern_name}" in file_path:
         pattern_name = ""
     else:
         pattern_name = f"_pattern_{pattern_name}"
@@ -321,31 +322,90 @@ def crop_image_by_percentage(file_obj, left_pct=0, top_pct=0, right_pct=0, botto
     return output
 
 
-def process_and_save(file_path, edit_function, *args):
-    print(file_path)
-    print(edit_function)
-    print(*args)
-    # Открыть файл и передать в функцию редактирования
-    with open(file_path, "rb") as file_obj:
-        output = edit_function(file_obj, *args)
+# def process_and_save(file_path, edit_function, *args):
+#     print(file_path)
+#     print(edit_function)
+#     print(*args)
+#     # Открыть файл и передать в функцию редактирования
+#     with open(file_path, "rb") as file_obj:
+#         output = edit_function(file_obj, *args)
 
-    # Определение нового имени файла
-    base, ext = os.path.splitext(file_path)
+#     # Определение нового имени файла
+#     base, ext = os.path.splitext(file_path)
+#     counter = 1
+#     new_file_path = f"{base}_{counter}{ext}"
+
+#     while os.path.exists(new_file_path):
+#         counter += 1
+#         new_file_path = f"{base}_{counter}{ext}"
+
+#     # Сохранить результат
+#     with open(new_file_path, "wb") as output_file:
+#         output_file.write(output.getvalue())
+
+#     print(f"Файл сохранён как: {new_file_path}")
+#     return new_file_path
+
+
+def clear_image_metadata(image_path):
+    # Открываем изображение
+    image = Image.open(image_path)
+
+    # Конвертируем изображение в RGB, если нужно
+    image = image.convert('RGB')
+
+    # Получаем базовое имя файла (без расширения) и директорию
+    dir_name = os.path.dirname(image_path)
+    base_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # Ищем свободное имя файла с увеличением числа
     counter = 1
-    new_file_path = f"{base}_{counter}{ext}"
-
-    while os.path.exists(new_file_path):
+    new_name = f"{counter}.jpg"
+    while os.path.exists(os.path.join(dir_name, new_name)):
         counter += 1
-        new_file_path = f"{base}_{counter}{ext}"
+        new_name = f"{counter}.jpg"
 
-    # Сохранить результат
-    with open(new_file_path, "wb") as output_file:
-        output_file.write(output.getvalue())
+    new_path = os.path.join(dir_name, new_name)
 
-    print(f"Файл сохранён как: {new_file_path}")
-    return new_file_path
+    # Сохраняем изображение в формате JPG без метаданных
+    image.save(new_path, format="JPEG", quality=95)
+
+    # Удаляем исходный файл
+    if new_path != image_path:
+        os.remove(image_path)
+
+    print(f"Изображение без метаданных сохранено как: {new_path}")
 
 
+
+def delete_files(file_names, folder_path):
+    for file_name in file_names:
+        file_path = os.path.join(folder_path, file_name)  # Формируем полный путь к файлу
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+            print(f"Файл {file_path} удалён.")
+        else:
+            print(f"Файл {file_path} не найден.")
+
+
+def process_and_save(patterns, files, output_path):
+    for name in files:
+        for pattern_name, pattern in patterns.items():
+            new_name = name
+            with open(fr"{output_path}/{name}", "rb") as file_obj:
+                for function in functions.keys():
+                    args = pattern.get(function.__name__)
+
+                    if args:
+                        new_name = add_suffix_to_filename(new_name, pattern_name, functions[function], args)
+                        file_obj = function(file_obj, *args)
+                # Определение нового имени файла
+                base, ext = os.path.splitext(new_name)
+                new_name = f"{base}{ext}"
+                with open(fr"{output_path}/{new_name}", "wb") as output_file:
+                    output_file.write(file_obj.getvalue())
+                    print(f"Файл сохранён как: {new_name}")
+                    new_name = name
 
 # Ввод названия бакета
 bucket_name = YANDEX_BUCKET_NAME # input("Введите название бакета: ")
@@ -405,25 +465,10 @@ bucket_name = YANDEX_BUCKET_NAME # input("Введите название бак
     # for file in files.full_paths:
     #     print(file)
 
-white_balance_factors = (
-    (1.1, 1.0, 0.9),  # Лёгкий сдвиг в сторону тёплых тонов
-    (0.9, 1.0, 1.1),  # Лёгкий сдвиг в сторону холодных тонов
-    (1.0, 1.1, 0.9),  # Усиление зелёного с уменьшением синего
-    (1.0, 0.9, 1.1),  # Ослабление зелёного, усиление синего
-    (1.1, 0.9, 1.0),  # Лёгкий сдвиг в сторону красного
-    (0.9, 1.1, 1.0),  # Усиление зелёного, ослабление красного
-    (1.05, 1.0, 0.95),  # Едва заметное усиление красного
-    (0.95, 1.0, 1.05),  # Едва заметное усиление синего
-    (1.0, 1.05, 0.95),  # Лёгкое усиление зелёного
-    (1.0, 0.95, 1.05),  # Лёгкое ослабление зелёного
-    (1.1, 1.1, 0.9),  # Усиление красного и зелёного, ослабление синего
-    (0.9, 1.1, 1.1),  # Усиление зелёного и синего, ослабление красного
-    (1.05, 0.95, 1.0),  # Едва заметный сдвиг
-    (0.95, 1.05, 1.0),  # Едва заметный сдвиг в обратную сторону
-)
+
 
 functions = {
-    # adjust_white_balance: "wb",
+    adjust_white_balance: "wb",
     adjust_contrast: "contrast",
     adjust_brightness: "brightness",
     crop_image_by_percentage: "crop",
@@ -431,25 +476,34 @@ functions = {
     rotate_image: "rotate"
     }
 
+
+
 if __name__ == "__main__":
-    # for tpl in white_balance_factors:
-    name = "2.jpg"
-    for pattern_name, pattern in patterns.items():
-        new_name = name
-        with open(name, "rb") as file_obj:
-            for function, args in zip(functions.keys(), list(pattern.values())[1:]):
-                if args:
-                    new_name = add_suffix_to_filename(new_name, pattern_name, functions[function], args)
-                    file_obj = function(file_obj, *args)
-            # Определение нового имени файла
-            base, ext = os.path.splitext(new_name)
-            new_name = f"{base}{ext}"
-            while os.path.exists(new_name):
-                new_name = f"{base}{ext}"
-            with open(new_name, "wb") as output_file:
-                output_file.write(file_obj.getvalue())
-                print(f"Файл сохранён как: {new_name}")
-                new_name = name
+    input_path = "input_images"
+    # files = [f for f in os.listdir(input_path)]
+    # for file in files:
+    #     clear_image_metadata(f"{input_path}/{file}")
+
+    first_phase = patterns["first_phase"]
+    name = "10.jpg"
+    print(name)
+
+    process_and_save(first_phase, [name], "output_images")
+    files = [f for f in os.listdir("output_images")]
+    second_phase = patterns["second_phase"]
+    process_and_save(second_phase, files, "output_images")
+    files = [f for f in os.listdir("output_images") if f != name]
+    third_phase = patterns["third_phase"]
+    for count, (key, value) in enumerate(third_phase.items()):
+        crop_settings = {key: value}
+        files_to_crop = [files[count]]
+        process_and_save(crop_settings, files_to_crop, "output_images")
+
+    delete_files(files, "output_images")
+    print(len(files))
+
+
+
 
     #main()
     # Пример использования:
