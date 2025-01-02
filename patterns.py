@@ -255,6 +255,8 @@ patterns = {'first_phase': {
                  47: {'adjust_white_balance': (0.95, 1.05, 1.0)}},
  'second_phase': {48: {'rotate_image': ('right', 1)},
                   49: {'rotate_image': ('left', 1)}},
+ 'alternative_second_phase': {48: {'resize_image': (94,)},
+                  49: {'resize_image': (110, )}},
  'third_phase': {50: {'crop_image_by_percentage': (crop_normal,
                                                    crop_normal,
                                                    crop_increase_low,

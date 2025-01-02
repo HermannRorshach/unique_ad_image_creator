@@ -3,10 +3,11 @@ import os
 from io import BytesIO
 
 import boto3
+import cv2
+import numpy as np
 from botocore.config import Config
 from dotenv import load_dotenv
 from PIL import Image, ImageEnhance, ImageOps
-
 
 from patterns import patterns
 
@@ -114,49 +115,44 @@ def calculate_opposite(hypotenuse, angle_deg):
     angle_rad = math.radians(angle_deg)
     return hypotenuse * math.sin(angle_rad)
 
+
 def rotate_image(image_path_or_file, direction, degrees):
-    # Открываем изображение
-    image = Image.open(image_path_or_file)
+    if direction not in ['left', 'right']:
+        raise ValueError("Direction must be 'left' or 'right'.")
 
-    # Проверяем направление и корректируем угол
-    if direction == 'right':
-        degrees = -degrees
+    # Read image as a numpy array
+    image = cv2.imdecode(np.frombuffer(image_path_or_file.read(), np.uint8), cv2.IMREAD_COLOR)
 
-    # Поворачиваем изображение
-    rotated_image = image.rotate(degrees, expand=False)
-    width, height = rotated_image.size
-    # print('После ротации')
-    # print('width =', width, 'height =', height)
+    # Get image dimensions
+    (h, w) = image.shape[:2]
+    print(h, w)
+    center = (w // 2, h // 2)
 
-    # Размеры исходного изображения
-    width, height = image.size
+    # Calculate rotation angle
+    angle = -degrees if direction == 'right' else degrees
 
-    # Рассчитываем, сколько обрезать
-    height_cut = calculate_opposite(width, abs(degrees))
-    # print('width =', width, 'Обрезаем сверху и снизу:', height_cut)
+    # Compute the rotation matrix
+    rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+
+    height_cut = calculate_opposite(w, abs(degrees))
+
     # Вычисляем обрезку слева и справа
-    width_cut = calculate_opposite(height, abs(degrees))
-    # print('height =', height, 'Обрезаем слева и справа:', width_cut)
+    width_cut = calculate_opposite(h, abs(degrees))
+    width = int(w - width_cut * 2)
+    height = int(h - height_cut * 2)
 
-    # Обрезаем новое изображение
-    left = width_cut
-    right = width - width_cut
-    top = height_cut
-    bottom = height - height_cut
+    rotation_matrix[0, 2] -= (w - width) / 2
+    rotation_matrix[1, 2] -= (h - height) / 2
 
-    # print('left, top, right, bottom :', left, top, right, bottom)
-    cropped_image = rotated_image.crop((left, top, right, bottom))
+    # Perform the rotation
+    rotated_image = cv2.warpAffine(image, rotation_matrix, (width, height), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
 
+    # Convert back to a file-like object
+    is_success, buffer = cv2.imencode('.jpg', rotated_image)
+    if not is_success:
+        raise RuntimeError("Failed to encode rotated image.")
 
-    # Преобразуем в RGB, если требуется
-    if cropped_image.mode == 'RGBA':
-        cropped_image = cropped_image.convert('RGB')
-
-    # Сохраняем результат в формате JPG в память
-    output = BytesIO()
-    cropped_image.save(output, format='JPEG')
-    output.seek(0)  # Возвращаем указатель на начало файла
-    return output
+    return BytesIO(buffer.tobytes())
 
 
 def upload_image(changed_file, file_name, bucket_name):
@@ -347,37 +343,6 @@ def crop_image_by_percentage(file_obj, left_pct=0, top_pct=0, right_pct=0, botto
 #     return new_file_path
 
 
-def clear_image_metadata(image_path):
-    # Открываем изображение
-    image = Image.open(image_path)
-
-    # Конвертируем изображение в RGB, если нужно
-    image = image.convert('RGB')
-
-    # Получаем базовое имя файла (без расширения) и директорию
-    dir_name = os.path.dirname(image_path)
-    base_name = os.path.splitext(os.path.basename(image_path))[0]
-
-    # Ищем свободное имя файла с увеличением числа
-    counter = 1
-    new_name = f"{counter}.jpg"
-    while os.path.exists(os.path.join(dir_name, new_name)):
-        counter += 1
-        new_name = f"{counter}.jpg"
-
-    new_path = os.path.join(dir_name, new_name)
-
-    # Сохраняем изображение в формате JPG без метаданных
-    image.save(new_path, format="JPEG", quality=95)
-
-    # Удаляем исходный файл
-    if new_path != image_path:
-        os.remove(image_path)
-
-    print(f"Изображение без метаданных сохранено как: {new_path}")
-
-
-
 def delete_files(file_names, folder_path):
     for file_name in file_names:
         file_path = os.path.join(folder_path, file_name)  # Формируем полный путь к файлу
@@ -386,6 +351,66 @@ def delete_files(file_names, folder_path):
             print(f"Файл {file_path} удалён.")
         else:
             print(f"Файл {file_path} не найден.")
+
+
+def get_file_size(file_path):
+    return os.path.getsize(file_path)
+
+def compress_image_to_size(image, max_size, quality_step=5):
+    """Сжимает изображение до заданного размера."""
+    buffer = BytesIO()
+    quality = 95
+    image.save(buffer, format="JPEG", quality=quality)
+    while buffer.tell() > max_size and quality > quality_step:
+        quality -= quality_step
+        buffer = BytesIO()
+        image.save(buffer, format="JPEG", quality=quality)
+    buffer.seek(0)
+    return buffer
+
+def clear_image_metadata(image_path):
+    """Удаляет метаданные из изображения и сохраняет его."""
+    # Открываем изображение
+    image = Image.open(image_path)
+
+    # Конвертируем изображение в RGB, если нужно
+    image = image.convert('RGB')
+
+    # Проверяем и сжимаем изображение, если его размер больше 307200 байт (300 КБ)
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", quality=95)
+    file_size = get_file_size(image_path)
+
+    if file_size > 307200:
+        print("Размер изображения (байты):", file_size)
+        print("Сжимаем изображение")
+        buffer = compress_image_to_size(image, 307200)
+        compressed_size = len(buffer.getvalue())  # Получаем корректный размер
+        print(f"Размер после сжатия (байты): {compressed_size}")
+
+
+    # Получаем базовое имя файла (без расширения) и директорию
+    dir_name = os.path.dirname(image_path)
+    base_name = os.path.splitext(os.path.basename(image_path))[0]
+
+    # Ищем свободное имя файла с увеличением числа
+    counter = 1
+    new_name = f"{base_name}_{counter}.jpg"
+    while os.path.exists(os.path.join(dir_name, new_name)):
+        counter += 1
+        new_name = f"{base_name}_{counter}.jpg"
+
+    new_path = os.path.join(dir_name, new_name)
+
+    # Сохраняем изображение в формате JPG без метаданных
+    with open(new_path, "wb") as f:
+        f.write(buffer.getvalue())
+
+    print(f"Изображение без метаданных сохранено как: {new_path}")
+    # Удаляем исходный файл
+    if new_path != image_path:
+        os.remove(image_path)
+
 
 
 def process_and_save(patterns, files, output_path):
@@ -485,12 +510,12 @@ if __name__ == "__main__":
     #     clear_image_metadata(f"{input_path}/{file}")
 
     first_phase = patterns["first_phase"]
-    name = "10.jpg"
+    name = os.listdir(input_path)[2]
     print(name)
 
     process_and_save(first_phase, [name], "output_images")
     files = [f for f in os.listdir("output_images")]
-    second_phase = patterns["second_phase"]
+    second_phase = patterns["alternative_second_phase"]
     process_and_save(second_phase, files, "output_images")
     files = [f for f in os.listdir("output_images") if f != name]
     third_phase = patterns["third_phase"]
