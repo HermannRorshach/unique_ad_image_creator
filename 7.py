@@ -166,13 +166,12 @@ def main(bucket_name):
             ("Запускаем подготовительный этап проверки папок",
              "Переходим к этапу поиска и исправления ошибок")[bool(iteration)])
 
-        folders = check_unique_file_in_folders(bucket_name, condition=bool(iteration))
+        folders = check_unique_file_in_folders(bucket_name, condition=iteration)
 
         if folders:
             if iteration == 2:
                 logger.info(f"------------------\n\nВ следующих {len(list(folders))} папках находится неправильное количество файлов:\n\n")
                 [logger.info(key) for key in list(folders.keys())]
-                break
 
             answer = 'y'
             if not iteration:
@@ -189,13 +188,13 @@ def main(bucket_name):
                 return
         else:
             logger.info(
-                "Папок с лишними файлами не найдено" + (", переходим к уникализации изображений" if iteration else "")
+                "Папок с лишними файлами не найдено" + (", переходим к уникализации изображений" if not iteration else "")
                 )
 
             if iteration:
                 break
 
-        files = (get_files(bucket_name).relative_paths, [files[0] for files in folders.values()])[iteration]
+        files = (get_files(bucket_name).relative_paths, [files[0] for files in folders.values()])[bool(iteration)]
 
         # Аинхронно обрабатываем файлы
         with ThreadPoolExecutor(max_workers=100) as executor:
@@ -209,5 +208,5 @@ def main(bucket_name):
 if __name__ == "__main__":
     login = input("Введите ваш логин: ")
     password = input("Введите ваш пароль: ")
-    bucket_name = "0001-small-test"  # input("Введите имя бакета: ")
+    bucket_name = input("Введите имя бакета: ")
     main(bucket_name)

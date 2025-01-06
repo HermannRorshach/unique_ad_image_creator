@@ -22,6 +22,7 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('unique_ad_image_generator.urls')),
+    path('', include('api.urls')),
 ]
 
 
