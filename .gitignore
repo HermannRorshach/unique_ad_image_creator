@@ -170,3 +170,4 @@ cython_debug/
 *.zip
 input_images/
 output_images/
+package/

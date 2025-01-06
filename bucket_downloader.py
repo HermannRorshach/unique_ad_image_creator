@@ -25,14 +25,14 @@ s3_client = session.client(
 def sanitize_name(name):
     name = re.sub(r'[\\/:"*?<>|]+', '_', name).rstrip('.')
     if re.fullmatch(r'[a-zA-Z0-9]+', name):
-        name = f"folder_{name}"
+        name = f"{name}"
     return name
 
 
 # Основной блок программы
 if __name__ == "__main__":
-    bucket_name = "adverts-bucket" # input("Введите название бакета: ").strip()
-    save_path = "c:/Users/Павел/Documents/Work/" # input("Введите путь к папке для сохранения файлов: ").strip()
+    bucket_name = "001test001" # input("Введите название бакета: ").strip()
+    save_path = "c:/Users/Павел/Documents/Work/folders" # input("Введите путь к папке для сохранения файлов: ").strip()
 
     if not os.path.exists(save_path):
         print("Указанный путь для сохранения не существует.")
@@ -42,21 +42,42 @@ if __name__ == "__main__":
     print("Начинается скачивание файлов...")
 
     try:
-        objects = s3_client.list_objects_v2(Bucket=bucket_name).get('Contents', [])
-        for obj in objects:
-            key = obj['Key']
-            # Корректируем путь сохранения
-            path_parts = [sanitize_name(part) for part in key.split('/')]
-            file_save_path = os.path.join(save_path, *path_parts)
+        continuation_token = None
+        total_files = 0
 
-            # Создаём директории, если нужно
-            os.makedirs(os.path.dirname(file_save_path), exist_ok=True)
+        while True:
+            # Параметры для пагинации
+            kwargs = {"Bucket": bucket_name}
+            if continuation_token:
+                kwargs["ContinuationToken"] = continuation_token
 
-            if not key.endswith('/'):  # Пропускаем "папки" S3
-                print(f"Скачивается файл: {key}...")
-                s3_client.download_file(bucket_name, key, file_save_path)
-                print(f"Файл сохранён: {file_save_path}")
+            # Получение объектов
+            response = s3_client.list_objects_v2(**kwargs)
+            objects = response.get('Contents', [])
+            total_files += len(objects)
 
-        print("Скачивание завершено успешно!")
+            # Обработка файлов
+            for obj in objects:
+                key = obj['Key']
+
+                # Корректируем путь сохранения
+                path_parts = [sanitize_name(part) for part in key.split('/')]
+                file_save_path = os.path.join(save_path, *path_parts)
+
+                # Создаём директории, если нужно
+                os.makedirs(os.path.dirname(file_save_path), exist_ok=True)
+
+                if not key.endswith('/'):  # Пропускаем "папки" S3
+                    print(f"Скачивается файл: {key}...")
+                    s3_client.download_file(bucket_name, key, file_save_path)
+                    print(f"Файл сохранён: {file_save_path}")
+
+            # Проверяем, есть ли следующая страница
+            if response.get('IsTruncated'):  # Если есть ещё данные
+                continuation_token = response['NextContinuationToken']
+            else:
+                break
+
+        print(f"Скачивание завершено успешно! Всего файлов: {total_files}")
     except Exception as e:
         print(f"Ошибка при скачивании файлов: {e}")

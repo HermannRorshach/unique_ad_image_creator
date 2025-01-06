@@ -20,13 +20,21 @@ s3_client = session.client(
     config=Config(signature_version='s3v4')
 )
 
-# Загрузка файла
-bucket_name = 'adverts-bucket'
-file_name = 'Screenshot_8.png'  # Исходное имя файла
-object_name = f'uploads/{file_name}'  # Имя объекта в бакете совпадает с именем файла
+# Функция для загрузки файлов из папки
+def upload_files_from_folder(folder_path, bucket_name):
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            local_path = os.path.join(root, file)  # Полный путь к файлу на локальной машине
+            relative_path = os.path.relpath(local_path, folder_path)  # Относительный путь
+            object_name = relative_path.replace("\\", "/")  # Преобразуем в формат S3
 
-s3_client.upload_file(file_name, bucket_name, object_name)
+            print(f"Загружаем файл: {local_path} -> {object_name}")
+            s3_client.upload_file(local_path, bucket_name, object_name)
+            print(f"Файл {object_name} успешно загружен!")
 
-# Генерация публичной ссылки
-public_url = f"https://storage.yandexcloud.net/{bucket_name}/{object_name}"
-print(public_url)
+# Укажите локальную папку и имя бакета
+folder_path = r"C:/Users/Павел/Documents/Work/folders"  # Замените на путь к вашей папке
+bucket_name = "0001-small-test"
+
+# Загружаем файлы
+upload_files_from_folder(folder_path, bucket_name)

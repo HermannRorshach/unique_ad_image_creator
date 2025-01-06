@@ -90,6 +90,7 @@ def download_and_clean_metadata(bucket_name, file_key):
     try:
         # Скачиваем файл из бакета
         file_name = file_key.split('/')[-1]  # Имя файла
+
         response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
 
         # Получаем содержимое файла
@@ -436,54 +437,56 @@ def process_and_save(patterns, files, output_path):
 bucket_name = YANDEX_BUCKET_NAME # input("Введите название бакета: ")
 
 
-# def main():
-    # # Получение списка папок
-    # folders = get_folders(bucket_name)
-    # # print("\nСписок относительных путей папок в бакете:")
-    # # for folder in folders.relative_paths:
-    # #     print(folder)
-    # # print("\nСписок абсолютных путей папок в бакете:")
-    # # for folder in folders.full_paths:
-    # #     print(folder)
+def main():
+    # Получение списка папок
+    folders = get_folders(bucket_name)
+    # print("\nСписок относительных путей папок в бакете:")
+    # for folder in folders.relative_paths:
+    #     print(folder)
+    # print("\nСписок абсолютных путей папок в бакете:")
+    # for folder in folders.full_paths:
+    #     print(folder)
 
-    # # Получение списка файлов
-    # files = get_files(bucket_name)
-    # print("\nСписок относительных путей файлов в бакете:")
+    # Получение списка файлов
+    files = get_files(bucket_name)
+    print("\nСписок относительных путей файлов в бакете:")
+    # print(files.relative_paths)
     # print(list(zip(files.relative_paths, folders.relative_paths)))
-    # for file in files.relative_paths:
-    #     file = "01/noinf1/1/3.jpg"
-    #     # file = "03/noinf1/1/2.jpg"
-    #     file_data = download_and_clean_metadata(bucket_name, file)
+    for file in files.relative_paths:
+        print(file)
+        if file.startswith("04"):
+            print('Yes')
 
-    #     output = adjust_brightness(file_data, 0.7)
-    #     new_name = add_suffix_to_filename(file, "brightness")
-    #     upload_image(output, new_name, bucket_name)
+        # file = "01/noinf1/1/3.jpg"
+        # file = "03/noinf1/1/2.jpg"
+            file_data = download_and_clean_metadata(bucket_name, file)
 
-    #     break
-
-
-    #     # Создаём и загружаем изображение, повёрнутое на 1 градус вправо
-    #     output = rotate_image(file_data, direction='right', degrees=1)
-    #     new_name = add_suffix_to_filename(file, "right_rotated_1_degrees")
-    #     upload_image(output, new_name, bucket_name)
-
-    #     # Создаём и загружаем изображение, повёрнутое на 2 градус вправо
-    #     output = rotate_image(file_data, direction='right', degrees=2)
-    #     new_name = add_suffix_to_filename(file, "right_rotated_2_degrees")
-    #     upload_image(output, new_name, bucket_name)
-
-    #     # Создаём и загружаем изображение, повёрнутое на 1 градус влево
-    #     output = rotate_image(file_data, direction='left', degrees=1)
-    #     new_name = add_suffix_to_filename(file, "left_rotated_1_degrees")
-    #     upload_image(output, new_name, bucket_name)
-
-    #     # Создаём и загружаем изображение, повёрнутое на 2 градус влево
-    #     output = rotate_image(file_data, direction='left', degrees=2)
-    #     new_name = add_suffix_to_filename(file, "left_rotated_2_degrees")
-    #     upload_image(output, new_name, bucket_name)
+        # output = adjust_brightness(file_data, 0.7)
+        # new_name = add_suffix_to_filename(file, "brightness")
+            upload_image(file_data, file, "0001-small-test")
 
 
-    #     break
+
+
+        # # Создаём и загружаем изображение, повёрнутое на 1 градус вправо
+        # output = rotate_image(file_data, direction='right', degrees=1)
+        # new_name = add_suffix_to_filename(file, "right_rotated_1_degrees")
+        # upload_image(output, new_name, bucket_name)
+
+        # # Создаём и загружаем изображение, повёрнутое на 2 градус вправо
+        # output = rotate_image(file_data, direction='right', degrees=2)
+        # new_name = add_suffix_to_filename(file, "right_rotated_2_degrees")
+        # upload_image(output, new_name, bucket_name)
+
+        # # Создаём и загружаем изображение, повёрнутое на 1 градус влево
+        # output = rotate_image(file_data, direction='left', degrees=1)
+        # new_name = add_suffix_to_filename(file, "left_rotated_1_degrees")
+        # upload_image(output, new_name, bucket_name)
+
+        # # Создаём и загружаем изображение, повёрнутое на 2 градус влево
+        # output = rotate_image(file_data, direction='left', degrees=2)
+        # new_name = add_suffix_to_filename(file, "left_rotated_2_degrees")
+        # upload_image(output, new_name, bucket_name)
 
 
     # print("\nСписок абсолютных путей файлов в бакете:")
@@ -504,33 +507,33 @@ functions = {
 
 
 if __name__ == "__main__":
-    input_path = "input_images"
-    # files = [f for f in os.listdir(input_path)]
-    # for file in files:
-    #     clear_image_metadata(f"{input_path}/{file}")
+    # input_path = "input_images"
+    # # files = [f for f in os.listdir(input_path)]
+    # # for file in files:
+    # #     clear_image_metadata(f"{input_path}/{file}")
 
-    first_phase = patterns["first_phase"]
-    name = os.listdir(input_path)[2]
-    print(name)
+    # first_phase = patterns["first_phase"]
+    # name = os.listdir(input_path)[2]
+    # print(name)
 
-    process_and_save(first_phase, [name], "output_images")
-    files = [f for f in os.listdir("output_images")]
-    second_phase = patterns["alternative_second_phase"]
-    process_and_save(second_phase, files, "output_images")
-    files = [f for f in os.listdir("output_images") if f != name]
-    third_phase = patterns["third_phase"]
-    for count, (key, value) in enumerate(third_phase.items()):
-        crop_settings = {key: value}
-        files_to_crop = [files[count]]
-        process_and_save(crop_settings, files_to_crop, "output_images")
+    # process_and_save(first_phase, [name], "output_images")
+    # files = [f for f in os.listdir("output_images")]
+    # second_phase = patterns["alternative_second_phase"]
+    # process_and_save(second_phase, files, "output_images")
+    # files = [f for f in os.listdir("output_images") if f != name]
+    # third_phase = patterns["third_phase"]
+    # for count, (key, value) in enumerate(third_phase.items()):
+    #     crop_settings = {key: value}
+    #     files_to_crop = [files[count]]
+    #     process_and_save(crop_settings, files_to_crop, "output_images")
 
-    delete_files(files, "output_images")
-    print(len(files))
-
-
+    # delete_files(files, "output_images")
+    # print(len(files))
 
 
-    #main()
+
+
+    main()
     # Пример использования:
     # Если хотите сохранить изображение в файл
     # rotated_img = rotate_image("Screenshot_28.png ", direction='right', degrees=45)
