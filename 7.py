@@ -154,14 +154,24 @@ def process_file(file_url, bucket_name):
         return False  # Ошибка
 
 def main(bucket_name):
-    operation = input("Запустить уникализацию файлов (введите цифру 1) или проверку на ошибки после выполненной уникализации (введите цифру 2) ")
+    operation = input("Главное меню. Выберите операцию\n"
+                      "1 - Запустить уникализацию файлов\n"
+                      "2 - Запустить проверку на ошибки после выполненной уникализации\n"
+                      "3 - Автоматически исправить ошибку с количеством файлов в папках\n"
+                      "любая другая клавиша - выйти из программы\n")
+    if operation not in ("123"):
+        return operation
     if int(operation) == 2:
         wrong_folders = check_unique_file_in_folders(bucket_name, condition=2)
-        logger.info(f"------------------\n\nВ следующих {len(list(wrong_folders))} папках находится неправильное количество файлов:\n\n")
+        logger.info(
+            ("В папках ошибки не обнаружены",
+             f"В следующих {len(list(wrong_folders))} папках находится неправильное количество файлов:\n\n")[bool(wrong_folders)])
         [logger.info(key) for key in list(wrong_folders.keys())]
         return
 
     for iteration in range(3):
+        if int(operation) == 3 and iteration < 2:
+            continue
         logger.info(
             ("Запускаем подготовительный этап проверки папок",
              "Переходим к этапу поиска и исправления ошибок")[bool(iteration)])
@@ -202,11 +212,20 @@ def main(bucket_name):
                 logger.info(file_path)
                 executor.submit(process_file, file_url=file_path, bucket_name=bucket_name)
 
-    logger.info("Программа завершена.")
+    logger.info("Операция завершена.")
+
+
+
+
+
 
 
 if __name__ == "__main__":
     login = input("Введите ваш логин: ")
     password = input("Введите ваш пароль: ")
     bucket_name = input("Введите имя бакета: ")
-    main(bucket_name)
+    while True:
+        answer = main(bucket_name)
+        if answer is not None:
+            print("Программа завершена")
+            break

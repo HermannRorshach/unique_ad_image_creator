@@ -171,3 +171,4 @@ cython_debug/
 input_images/
 output_images/
 package/
+client-api.json
