@@ -90,40 +90,22 @@ def get_files(bucket_name):
     return files
 
 
-# Функция для получения списка папок
-def get_folders(files):
-    folders = Paths()
+def get_directories(files, obj, index, name):
     try:
         for file in files.relative_paths:
-            folder = '/'.join(file.split('/')[:-1])
-            if not folder in folders.relative_paths:
-                folders.add_relative_path(folder)
+            folder = '/'.join(file.split('/')[:index])
+            if not folder in obj.relative_paths:
+                obj.add_relative_path(folder)
 
         for file in files.full_paths:
-            folder = '/'.join(file.split('/')[:-1])
-            if not folder in folders.full_paths:
-                folders.add_full_path(folder)
+            folder = '/'.join(file.split('/')[:index])
+            if not folder in obj.full_paths:
+                obj.add_full_path(folder)
     except Exception as e:
-        print(f"Ошибка при получении списка папок: {e}")
+        print(f"Ошибка при получении списка {name}: {e}")
 
-    return folders
+    return obj
 
-def get_products(files):
-    products = Paths()
-    try:
-        for file in files.relative_paths:
-            product = '/'.join(file.split('/')[:-2])
-            if not product in products.relative_paths:
-                products.add_relative_path(product)
-
-        for file in files.full_paths:
-            product = '/'.join(file.split('/')[:-2])
-            if not product in products.full_paths:
-                products.add_full_path(product)
-    except Exception as e:
-        print(f"Ошибка при получении списка папок: {e}")
-
-    return products
 
 import openpyxl
 
@@ -146,12 +128,10 @@ def update_excel_with_image_urls(file_name, sheet_name, image_urls):
         raise ValueError("Столбец 'ImageUrls' не найден.")
 
     # Заполнение столбца "ImageUrls"
-    row_idx = 2  # Начинаем с 2-й строки (после заголовка)
+    row_idx = 4  # Начинаем с 2-й строки (после заголовка)
     for i, image_url in enumerate(image_urls):
         sheet.cell(row=row_idx, column=image_urls_column, value=image_url)
         row_idx += 1
-        if i == 1:
-            print("Печатаем", image_url)
 
     # Сохраняем изменения в файл
     wb.save(file_name)
@@ -165,14 +145,33 @@ sheet_name = "2"  # Название листа
 
 def main(bucket_name):
     files = get_files(bucket_name)
-    folders = get_folders(files)
+
+    folders = Paths()
+    folders = get_directories(files, folders, -1, "папок")
     print("Длина списка папок: ", len(folders.relative_paths))
-    products = get_products(files)
+    print("Папки:\n")
+    print(folders.full_paths)
+    print("_____________\n")
+
+    products = Paths()
+    products = get_directories(files, products, -2, "продуктов")
     print("Длина списка товаров: ", len(products.relative_paths), products.full_paths[0])
+    print("Товары:\n")
+    print(products.full_paths)
+    print("_____________\n")
+
+    categories = Paths()
+    categories = get_directories(files, categories, -3, "категорий")
+    print("Длина списка категорий: ", len(categories.relative_paths), categories.full_paths[0])
+    print("Категории:\n")
+    print(categories.full_paths)
+    print("_____________\n")
+
     shuffle(files.relative_paths)
     print("Длина списка файлов: ", len(files.relative_paths), files.relative_paths[0])
 
-    product_images = [
+    category_images = [
+        [
         [
             [
                 f"{YANDEX_ENDPOINT_URL}/{bucket_name}/{file}" for file in files.relative_paths
@@ -182,11 +181,15 @@ def main(bucket_name):
             if folder.startswith(product + "/")
         ]
         for product in products.relative_paths
+        if product.startswith(category + "/")
+        ]
+        for category in categories.relative_paths
     ]
 
     values_for_table = []
-    for product in product_images:
-        values_for_table.extend([" | ".join(items) for items in zip(*product)])
+    for category in category_images:
+        for product in category:
+            values_for_table.extend([" | ".join(items) for items in zip(*product)])
         values_for_table.append("")
 
     print(len(values_for_table))
@@ -198,4 +201,4 @@ def main(bucket_name):
 
 if __name__ == "__main__":
 
-    main("0001-small-test")
+    main("testperegorodki")

@@ -15,7 +15,9 @@ from patterns import patterns
 s3_client = boto3.client(
     service_name='s3',
     endpoint_url='https://storage.yandexcloud.net',
-    config=Config(signature_version='s3v4'),
+    config=Config(signature_version='s3v4')
+    # aws_access_key_id='my_access_key_id',
+    # aws_secret_access_key='my_secret_access_key'
 )
 
 MAX_SIZE = 307200  # Максимальный размер файла (300 КБ)
@@ -26,59 +28,78 @@ def calculate_opposite(hypotenuse, angle_deg):
 
 
 def rotate_image(image_path_or_file, direction, degrees):
+    print("Starting rotate_image function.")
+
     if direction not in ['left', 'right']:
         raise ValueError("Direction must be 'left' or 'right'.")
+    print(f"Rotation direction: {direction}. Rotation degrees: {degrees}.")
 
-    # Read image as a numpy array
-    image = cv2.imdecode(np.frombuffer(image_path_or_file.read(), np.uint8), cv2.IMREAD_COLOR)
+    # Проверяем передаваемые данные
+    if not hasattr(image_path_or_file, 'read'):
+        raise TypeError(f"Expected file-like object, but got {type(image_path_or_file)}")
+
+    try:
+        image_data = image_path_or_file.read()
+        if not image_data:
+            raise ValueError("Image data is empty.")
+        print(f"Image data length: {len(image_data)}")
+        image = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            raise ValueError("Failed to decode the image.")
+        print("Image loaded and decoded successfully.")
+    except Exception as e:
+        print(f"Error reading or decoding image: {e}")
+        raise
 
     # Get image dimensions
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
+    print(f"Image dimensions: width={w}, height={h}. Rotation center: {center}.")
 
     # Calculate rotation angle
     angle = -degrees if direction == 'right' else degrees
+    print(f"Calculated rotation angle: {angle} degrees.")
 
     # Compute the rotation matrix
     rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+    print(f"Rotation matrix: {rotation_matrix}.")
 
-    height_cut = calculate_opposite(w, abs(degrees))
+    try:
+        height_cut = calculate_opposite(w, abs(degrees))  # Ensure this function is defined
+        width_cut = calculate_opposite(h, abs(degrees))
+        print(f"Calculated cuts: height_cut={height_cut}, width_cut={width_cut}.")
+    except Exception as e:
+        print(f"Error calculating cuts: {e}")
+        raise
 
-    # Вычисляем обрезку слева и справа
-    width_cut = calculate_opposite(h, abs(degrees))
     width = int(w - width_cut * 2)
     height = int(h - height_cut * 2)
+    print(f"New image dimensions after cut: width={width}, height={height}.")
 
     rotation_matrix[0, 2] -= (w - width) / 2
     rotation_matrix[1, 2] -= (h - height) / 2
+    print(f"Adjusted rotation matrix: {rotation_matrix}.")
 
     # Perform the rotation
-    rotated_image = cv2.warpAffine(image, rotation_matrix, (width, height), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+    try:
+        rotated_image = cv2.warpAffine(image, rotation_matrix, (width, height), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+        print("Image rotated successfully.")
+    except Exception as e:
+        print(f"Error during image rotation: {e}")
+        raise
 
     # Convert back to a file-like object
-    is_success, buffer = cv2.imencode('.jpg', rotated_image)
-    if not is_success:
-        raise RuntimeError("Failed to encode rotated image.")
-
-    return BytesIO(buffer.tobytes())
-
-
-def upload_image(changed_file, file_name, bucket_name):
     try:
-        # Загрузить изменённое изображение обратно в Yandex Cloud
-        new_file_key = f"{file_name}"  # Путь в бакете
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=new_file_key,
-            Body=changed_file.getvalue(),
-            Metadata={}  # Пустые мета-данные
-        )
-
-        print(f"Файл {new_file_key} успешно загружен в Yandex Cloud с изменениями.")
-
+        is_success, buffer = cv2.imencode('.jpg', rotated_image)
+        if not is_success:
+            raise RuntimeError("Failed to encode rotated image.")
+        print("Image encoded successfully.")
     except Exception as e:
-        print(f"Ошибка при обработке и загрузке файла {file_name}: {e}")
+        print(f"Error encoding image: {e}")
+        raise
 
+    # Возвращаем сжатое изображение в виде байтового потока
+    return BytesIO(buffer.tobytes())
 
 def add_suffix_to_filename(file_path, pattern_name, suffix, args):
     print("принт из add_suffix_to_filename", "file_path =", file_path, 'pattern_name =', pattern_name, 'suffix =', suffix, 'args =', args)
@@ -238,9 +259,7 @@ def delete_files_from_bucket(file_keys, bucket_name):
 def list_files_in_folder(bucket_name, file_key):
     folder_path = "/".join(file_key.split("/")[:-1]) + "/"
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=folder_path)
-    return [obj['Key'] for obj in response.get('Contents', [])]
-
-
+    return [obj['Key'] for obj in response.get('Contents', []) if not obj['Key'].endswith('/')]
 
 
 def compress_image_to_size(image_data, max_size, resize_factor=0.9):
@@ -251,9 +270,11 @@ def compress_image_to_size(image_data, max_size, resize_factor=0.9):
 
     buffer = BytesIO()
     width, height = image.size
-
+    count = 1
     while True:
         # Сохраняем изображение в буфер
+        print("Сохраняем изображение в буфер в", count, "раз")
+        count += 1
         image.save(buffer, format="JPEG", quality=95)
         # Проверяем размер
         if buffer.tell() <= max_size:
@@ -279,7 +300,7 @@ def clear_image_metadata(bucket_name, file_key):
             compressed_file = compress_image_to_size(file_data, MAX_SIZE)
             file_data = compressed_file.getvalue()
 
-        new_path = file_key.replace('.jfif', '.jpg')
+        new_path = file_key.rsplit('.', 1)[0] + '.jpg'
 
         # Загрузка файла обратно с очищенными мета-данными
         s3_client.put_object(
@@ -287,12 +308,13 @@ def clear_image_metadata(bucket_name, file_key):
             Key=new_path,  # Заменяем расширение на .jpg, если это JFIF
             Body=file_data,
             Metadata={},  # Пустые мета-данные
+            ContentType="image/jpeg"
         )
 
         if new_path != file_key:
             delete_files_from_bucket([file_key], bucket_name)
 
-        return f"Metadata for file '{file_key}' cleaned and file compressed (if needed) successfully."
+        return new_path
     except Exception as e:
         raise RuntimeError(f"Error processing file '{file_key}' in bucket '{bucket_name}': {e}")
 
@@ -311,7 +333,12 @@ def process_and_save(patterns, files, bucket_name):
             # Определение нового имени файла
             base, ext = os.path.splitext(new_name)
             new_name = f"{base}{ext}"
-            s3_client.put_object(Body=file_obj.getvalue(), Bucket=bucket_name, Key=new_name)
+            s3_client.put_object(
+                Body=file_obj.getvalue(),
+                Bucket=bucket_name,
+                Key=new_name,
+                Metadata={},
+                ContentType="image/jpeg")
 
 
 functions = {
@@ -336,13 +363,18 @@ def main(event, context):
         raise ValueError("Both 'bucket_name' and 'file_key' are required.")
 
     # Вызов первой функции
-    clear_image_metadata(bucket_name, file_key)
+    file_key = clear_image_metadata(bucket_name, file_key)
 
     first_phase = patterns["first_phase"]
 
     process_and_save(first_phase, [file_key], bucket_name)
 
     files = list_files_in_folder(bucket_name, file_key)
+    file_name = file_key.split("/")[-1].split(".")[0]
+    index = image_transform_option == "second_phase"
+    if file_name.startswith("var-2") or file_name.endswith("var-2"):
+        index = not index
+    image_transform_option = ("alternative_second_phase", "second_phase")[index]
 
     second_phase = patterns[image_transform_option]
     process_and_save(second_phase, files, bucket_name)
@@ -395,13 +427,13 @@ def main(event, context):
     #         })
     #     }
 
-if __name__ == "__main__":
-    event = {
-        "body": json.dumps({
-            "bucket_name": "0001-small-test",
-            "file_key": "04/noinf1/10/2023-05-11 13-27-02.jfif",
-            'image_transform_option': 'second_phase'
-        })
-    }
-    context = {}  # Пустой контекст, если он не используется
-    main(event, context)
+# if __name__ == "__main__":
+#     event = {
+#         "body": json.dumps({
+#             "bucket_name": "0001-small-test",
+#             "file_key": "04/noinf1/3/2023-05-11 13-27-08.JPG",
+#             'image_transform_option': 'second_phase'
+#         })
+#     }
+#     context = {}  # Пустой контекст, если он не используется
+#     main(event, context)

@@ -153,6 +153,7 @@ def process_file(file_url, bucket_name):
         logger.error(f"Ошибка при обработке файла {file_url}: {e}")
         return False  # Ошибка
 
+
 def main(bucket_name):
     operation = input("Главное меню. Выберите операцию\n"
                       "1 - Запустить уникализацию файлов\n"
@@ -211,6 +212,7 @@ def main(bucket_name):
             for file_path in files:
                 logger.info(file_path)
                 executor.submit(process_file, file_url=file_path, bucket_name=bucket_name)
+
 
     logger.info("Операция завершена.")
 

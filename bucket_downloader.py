@@ -31,8 +31,8 @@ def sanitize_name(name):
 
 # Основной блок программы
 if __name__ == "__main__":
-    bucket_name = "001test001" # input("Введите название бакета: ").strip()
-    save_path = "c:/Users/Павел/Documents/Work/folders" # input("Введите путь к папке для сохранения файлов: ").strip()
+    bucket_name = "testperegorodki" # input("Введите название бакета: ").strip()
+    save_path = "c:/Users/Павел/Documents/Work/folders_1" # input("Введите путь к папке для сохранения файлов: ").strip()
 
     if not os.path.exists(save_path):
         print("Указанный путь для сохранения не существует.")

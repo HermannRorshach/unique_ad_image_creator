@@ -20,6 +20,8 @@ s3_client = session.client(
     config=Config(signature_version='s3v4')
 )
 
+import mimetypes
+
 # Функция для загрузки файлов из папки
 def upload_files_from_folder(folder_path, bucket_name):
     for root, _, files in os.walk(folder_path):
@@ -28,12 +30,23 @@ def upload_files_from_folder(folder_path, bucket_name):
             relative_path = os.path.relpath(local_path, folder_path)  # Относительный путь
             object_name = relative_path.replace("\\", "/")  # Преобразуем в формат S3
 
-            print(f"Загружаем файл: {local_path} -> {object_name}")
-            s3_client.upload_file(local_path, bucket_name, object_name)
+            # Определяем MIME-тип файла
+            content_type, _ = mimetypes.guess_type(local_path)
+            if not content_type:
+                content_type = "application/octet-stream"  # Устанавливаем тип по умолчанию
+
+            print(f"Загружаем файл: {local_path} -> {object_name} с MIME-типом: {content_type}")
+            s3_client.upload_file(
+                local_path,
+                bucket_name,
+                object_name,
+                ExtraArgs={"ContentType": content_type}  # Передаём MIME-тип
+            )
             print(f"Файл {object_name} успешно загружен!")
 
+
 # Укажите локальную папку и имя бакета
-folder_path = r"C:/Users/Павел/Documents/Work/folders"  # Замените на путь к вашей папке
+folder_path = r"C:/Users/Павел/Documents/Work/folders_1"  # Замените на путь к вашей папке
 bucket_name = "0001-small-test"
 
 # Загружаем файлы
