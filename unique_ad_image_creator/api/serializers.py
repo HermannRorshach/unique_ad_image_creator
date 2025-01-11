@@ -1,35 +1,35 @@
 from django.contrib.auth import get_user_model
-from planner.models import Feedback, LunchParticipant
-from .models import Task
+# from planner.models import Feedback, LunchParticipant
+# from .models import Task
 from rest_framework.serializers import CharField, DateField, ModelSerializer
 
 
-class LunchParticipantSerializer(ModelSerializer):
-    date = DateField(required=False)  # Сделаем поле date необязательным
-    comment = CharField(required=False, allow_blank=True)  # Сделаем поле comment необязательным
+# class LunchParticipantSerializer(ModelSerializer):
+#     date = DateField(required=False)  # Сделаем поле date необязательным
+#     comment = CharField(required=False, allow_blank=True)  # Сделаем поле comment необязательным
 
-    class Meta:
-        model = LunchParticipant
-        fields = '__all__'
+#     class Meta:
+#         model = LunchParticipant
+#         fields = '__all__'
 
-class FeedbackSerializer(ModelSerializer):
+# class FeedbackSerializer(ModelSerializer):
 
-    class Meta:
-        model = Feedback
-        fields = '__all__'
-
-
-
-class TaskSerializer(ModelSerializer):
-
-    class Meta:
-        model = Task
-        fields = '__all__'
+#     class Meta:
+#         model = Feedback
+#         fields = '__all__'
 
 
 
-class UserSerializer(ModelSerializer):
+# class TaskSerializer(ModelSerializer):
 
-    class Meta:
-        model = get_user_model()
-        fields = ['email']
+#     class Meta:
+#         model = Task
+#         fields = '__all__'
+
+
+
+# class UserSerializer(ModelSerializer):
+
+#     class Meta:
+#         model = get_user_model()
+#         fields = ['email']

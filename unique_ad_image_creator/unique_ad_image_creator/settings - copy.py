@@ -10,15 +10,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-import os
 from pathlib import Path
 import sys
-from .env import EMAIL, EMAIL_PASSWORD
+import os
+from dotenv import load_dotenv
 
+print("DEBUG: Loading environment variables...")
+print("Current working directory:", os.getcwd())
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(BASE_DIR / '.env')
+EMAIL = os.getenv('EMAIL')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 

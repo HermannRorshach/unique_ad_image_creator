@@ -1,0 +1,257 @@
+html {
+    background-color: #f4f4f9;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.top-menu {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+.top-menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.top-menu ul li {
+    display: inline;
+    margin-left: 20px;
+}
+
+.top-menu ul li a {
+    text-decoration: none;
+    color: #E5322D;
+    font-weight: bold;
+}
+
+.top-menu ul li a:hover {
+    text-decoration: none;
+    color: #BD060A;
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 36px;
+    color: #333;
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+.description {
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+input[type="file"]:hover {
+    border-color: #007bff;
+}
+
+.submit-button {
+    display: inline-block;
+    width: 100%;
+    padding: 15px;
+    background-color: #E5322D;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #BD060A;
+    transform: translateY(-2px);
+}
+
+input[type="file"] {
+    display: none; /* Скрываем стандартный input */
+}
+
+.file-upload {
+    display: inline-block;
+    padding: 12px 20px;
+    background-color: #E5322D;
+    color: white;
+    width: 23%;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.file-upload:hover {
+    background-color: #BD060A;
+    transform: translateY(-2px);
+}
+
+.file-name {
+    display: block;
+    margin-top: 5px;
+    font-size: 14px;
+    color: #555;
+}
+
+.faq-wrapper {
+    max-width: 900px; /* Ширина контейнера */
+    margin: 50px auto; /* Центрирование */
+    padding: 100px; /* Внутренние отступы */
+    background-color: #fff; /* Цвет фона */
+    border-radius: 8px; /* Закругленные углы */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Тень для эффекта глубины */
+}
+
+.faq-container h1 {
+    text-align: center; /* Центрирование заголовка */
+    color: #333; /* Цвет заголовка */
+    margin-bottom: 50px; /* Отступ снизу */
+}
+
+.faq-item {
+    margin-bottom: 50px; /* Отступ между элементами FAQ */
+}
+
+.faq-question {
+    color: #8B0000; /* Тёмно-красный цвет */
+    font-weight: bold; /* Жирный текст */
+    font-size: 24px;
+}
+
+
+
+.nav-button.active {
+    background-color: #da080b!important;
+    color: white!important;
+    padding: 8px 25px!important;
+    margin: 0 5px;
+}
+
+.nav-button:hover {
+    background-color: #da080b!important;
+    color: white!important;
+}
+
+.nav-button.active:hover {
+    background-color: #8B0000!important;
+    color: white!important;
+}
+
+.nav-link {
+	color: #ff0000; /* Меняем цвет текста */
+	font-weight: bold; /* Добавляем жирность текста */
+}
+
+
+.faq-question:hover {
+    color: #da080b; /* Цвет при наведении */
+}
+
+table th:first-child {
+    text-align: left; /* Выровнять по левому краю */
+}
+
+a.nav-button {
+    color: #da080b;
+}
+
+a {
+    color: #da080b; /* Тёмно-красный цвет для ссылок */
+    text-decoration: none; /* Убрать подчеркивание */
+}
+
+a:visited {
+    color: #8B0000; /* Цвет посещенных ссылок */
+}
+
+a:active {
+    color: #8B0000!important; /* Цвет посещенных ссылок */
+}
+
+a:hover {
+    color: #8B0000!important; /* Цвет посещенных ссылок */
+}
+
+ul {
+    list-style-type: none; /* Убрать кругляшки */
+    padding: 0; /* Убрать отступы */
+}
+
+.contacts {margin-bottom: 50px;}
+
+.icons {
+    display: inline-flex;
+    margin-bottom: 50px;
+}
+
+.icons__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 40px;
+    border: solid var(--color-blue); /* Замените $color-blue на реальное значение цвета */
+    border-radius: 40px;
+    margin-right: 50px;
+}
+
+.icons__item:last-child {
+    margin-right: 0;
+}
+
+.icons__item i {
+    font-size: 25px;
+    color: black;
+}
+
+.icon-svg {
+    /* width: 21px; Подгоните размер под другие иконки */
+    height: 25px; /* Подгоните размер под другие иконки */
+    color: black; /* Цвет иконки, если необходимо */
+    display: block; /* Чтобы избежать отступов */
+}
+
+.alert {
+    background-color: #f8d7da; /* Цвет фона для ошибки */
+    color: #721c24; /* Цвет текста для ошибки */
+    padding: 15px; /* Внутренние отступы */
+    margin-bottom: 20px; /* Отступ снизу */
+    border: 1px solid #f5c6cb; /* Цвет рамки */
+    border-radius: 5px; /* Закругленные углы */
+}

@@ -22,7 +22,9 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('unique_ad_image_generator.urls')),
-    path('', include('api.urls')),
+    path('api/', include('api.urls', namespace='api')),
+    path('', include('users.urls')),
+    path('', include('create_presentation.urls')),
 ]
 
 
